@@ -1,4 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using Microsoft.Extensions.Configuration;
+using OddsAndBodsTask.Classes;
+using OddsAndBodsTask.DAL;
+using OddsAndBodsTask.Helpers;
+using OddsAndBodsTask.Models;
+using OddsAndBodsTask.Models.ResponseModels;
 
 namespace OddsAndBodsTask
 {
@@ -6,7 +14,231 @@ namespace OddsAndBodsTask
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            IConfigurationBuilder builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+            IConfigurationRoot configuration = builder.Build();
+            var author = configuration.GetSection("MyConfig").Get<MyConfig>();
+
+            ProcessItems(author.SWAPIUrl);
+
+            Environment.Exit(0);
+        }
+
+        private static void ProcessItems(string baseUrl)
+        {
+            try
+            {
+                LogHelper.SubmitLog("Getting Peoples", LogType.Comment);
+                var people = GetAllPeople(baseUrl);
+                LogHelper.SubmitLog($"{people.Count} peoples retrieved", LogType.Info);
+
+                LogHelper.SubmitLog("Getting Films", LogType.Comment);
+                var films = GetFilms(baseUrl);
+                LogHelper.SubmitLog($"{films.Count} films retrieved", LogType.Info);
+
+                LogHelper.SubmitLog("Getting Planets", LogType.Comment);
+                var planets = GetPlanets(baseUrl);
+                LogHelper.SubmitLog($"{planets.Count} planets retrieved", LogType.Info);
+
+                LogHelper.SubmitLog("Getting Species", LogType.Comment);
+                var species = GetSpecies(baseUrl);
+                LogHelper.SubmitLog($"{species.Count} species retrieved", LogType.Info);
+
+                LogHelper.SubmitLog("Getting Starships", LogType.Comment);
+                var starShips = GetStarships(baseUrl);
+                LogHelper.SubmitLog($"{starShips.Count} starships retrieved", LogType.Info);
+
+                LogHelper.SubmitLog("Getting Vehicles", LogType.Comment);
+                var vehicles = GetVehicles(baseUrl);
+                LogHelper.SubmitLog($"{vehicles.Count} vehicles retrieved", LogType.Info);
+
+
+                LogHelper.SubmitLog("...........................................", LogType.Comment);
+                
+                //Adding objects
+                LogHelper.SubmitLog("Processing Films...", LogType.Comment);
+                var filmsToAdd = ModelFactory.GenerateNewFilms(films);
+                FilmRepository.Insert(filmsToAdd);
+                LogHelper.SubmitLog($"Done!", LogType.Info);
+
+                LogHelper.SubmitLog("Processing Planets...", LogType.Comment);
+                var planetsToAdd = ModelFactory.GenerateNewPlanets(planets);
+                PlanetRepository.Insert(planetsToAdd);
+                LogHelper.SubmitLog($"Done!", LogType.Info);
+
+                LogHelper.SubmitLog("Processing Vehicles...", LogType.Comment);
+                var vehiclesToAdd = ModelFactory.GenerateNewVehicles(vehicles);
+                VehicleRepository.Insert(vehiclesToAdd);
+                LogHelper.SubmitLog($"Done!", LogType.Info);
+
+                LogHelper.SubmitLog("Processing Starships...", LogType.Comment);
+                var starshipsToAdd = ModelFactory.GenerateNewStarShips(starShips);
+                StarshipRepository.Insert(starshipsToAdd);
+                LogHelper.SubmitLog($"Done!", LogType.Info);
+
+                LogHelper.SubmitLog("Processing Species...", LogType.Comment);
+                var speciesToAdd = ModelFactory.GenerateNewSpecies(species);
+                SpeciesRepository.Insert(speciesToAdd);
+                LogHelper.SubmitLog($"Done!", LogType.Info);
+
+                LogHelper.SubmitLog("Processing People...", LogType.Comment);
+                var peopleToAdd = ModelFactory.GenerateNewPeople(people);
+                PeopleRepository.Insert(peopleToAdd);
+                LogHelper.SubmitLog($"Done!", LogType.Info);
+            }
+            catch (Exception exp)
+            {
+                LogHelper.SubmitLog(exp.Message, LogType.Error);
+            }
+        }
+
+        private static List<VehicleResponseItemModel> GetVehicles(string baseUrl)
+        {
+            var vehicleItems = new List<VehicleResponseItemModel>();
+            var vehicles = HttpRequestsHelper.ExecuteGetRequest<VehiclesResponse>(baseUrl.Replace("{{::Placeholder::}}", "vehicles")) as VehiclesResponse;
+            vehicleItems.AddRange(vehicles.results);
+
+            if (vehicles.count > 10)
+            {
+                var url = vehicles.next;
+                var pages = vehicles.count / 10 + 1;
+
+                for (int i = 1; i < pages; i++)
+                {
+                    vehicles = HttpRequestsHelper.ExecuteGetRequest<VehiclesResponse>(url) as VehiclesResponse;
+                    url = vehicles.next;
+                    vehicleItems.AddRange(vehicles.results);
+                    if (string.IsNullOrEmpty(vehicles.next))
+                        break;
+                }
+            }
+
+            return vehicleItems;
+        }
+
+        private static List<StarshipResponseItemModel> GetStarships(string baseUrl)
+        {
+            var starshipItems = new List<StarshipResponseItemModel>();
+            var starShips = HttpRequestsHelper.ExecuteGetRequest<StarShipResponse>(baseUrl.Replace("{{::Placeholder::}}", "starships")) as StarShipResponse;
+            starshipItems.AddRange(starShips.results);
+
+            if (starShips.count > 10)
+            {
+                var url = starShips.next;
+                var pages = starShips.count / 10 + 1;
+
+                for (int i = 1; i < pages; i++)
+                {
+                    starShips = HttpRequestsHelper.ExecuteGetRequest<StarShipResponse>(url) as StarShipResponse;
+                    url = starShips.next;
+                    starshipItems.AddRange(starShips.results);
+                    if (string.IsNullOrEmpty(starShips.next))
+                        break;
+                }
+            }
+
+            return starshipItems;
+        }
+
+        private static List<SpeciesResponseItemModel> GetSpecies(string baseUrl)
+        {
+            var speciesItems = new List<SpeciesResponseItemModel>();
+            var species = HttpRequestsHelper.ExecuteGetRequest<SpeciesResponse>(baseUrl.Replace("{{::Placeholder::}}", "species")) as SpeciesResponse;
+            speciesItems.AddRange(species.results);
+
+            if (species.count > 10)
+            {
+                var url = species.next;
+                var pages = species.count / 10 + 1;
+
+                for (int i = 1; i < pages; i++)
+                {
+                    species = HttpRequestsHelper.ExecuteGetRequest<SpeciesResponse>(url) as SpeciesResponse;
+                    url = species.next;
+                    speciesItems.AddRange(species.results);
+                    if (string.IsNullOrEmpty(species.next))
+                        break;
+                }
+            }
+
+            return speciesItems;
+        }
+
+        private static List<PlanetResponseItemModel> GetPlanets(string baseUrl)
+        {
+            var planetItems = new List<PlanetResponseItemModel>();
+            var planets = HttpRequestsHelper.ExecuteGetRequest<PlanetsResponse>(baseUrl.Replace("{{::Placeholder::}}", "planets")) as PlanetsResponse;
+            planetItems.AddRange(planets.results);
+
+            if (planets.count > 10)
+            {
+                var url = planets.next;
+                var pages = planets.count / 10 + 1;
+
+                for (int i = 1; i < pages; i++)
+                {
+                    planets = HttpRequestsHelper.ExecuteGetRequest<PlanetsResponse>(url) as PlanetsResponse;
+                    url = planets.next;
+                    planetItems.AddRange(planets.results);
+                    if (string.IsNullOrEmpty(planets.next))
+                        break;
+                }
+            }
+
+            return planetItems;
+        }
+
+        private static List<FilmResponseItemModel> GetFilms(string baseUrl)
+        {
+            var firmItems = new List<FilmResponseItemModel>();
+            var films = HttpRequestsHelper.ExecuteGetRequest<FilmsResponse>(baseUrl.Replace("{{::Placeholder::}}", "films")) as FilmsResponse;
+            firmItems.AddRange(films.results);
+
+            if (films.count > 10)
+            {
+                var url = films.next;
+                var pages = films.count / 10 + 1;
+
+                for (int i = 1; i < pages; i++)
+                {
+                    films = HttpRequestsHelper.ExecuteGetRequest<FilmsResponse>(url) as FilmsResponse;
+                    url = films.next;
+                    firmItems.AddRange(films.results);
+                    if (string.IsNullOrEmpty(films.next))
+                        break;
+                }
+            }
+
+            return firmItems;
+        }
+
+        private static List<PeopleResponseItemModel> GetAllPeople(string baseUrl)
+        {
+            var peopleItems = new List<PeopleResponseItemModel>();
+
+            var people =
+                HttpRequestsHelper.ExecuteGetRequest<PeopleResponse>(baseUrl.Replace("{{::Placeholder::}}", "people")) as PeopleResponse;
+
+            peopleItems.AddRange(people.results);
+
+            if (people.count > 10)
+            {
+                var url = people.next;
+                var pages = people.count / 10 + 1;
+
+                for (int i = 1; i < pages; i++)
+                {
+                    people = HttpRequestsHelper.ExecuteGetRequest<PeopleResponse>(url) as PeopleResponse;
+                    url = people.next;
+                    peopleItems.AddRange(people.results);
+                    if (string.IsNullOrEmpty(people.next))
+                        break;
+                }
+            }
+
+            return peopleItems;
         }
     }
 }
