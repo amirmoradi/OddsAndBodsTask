@@ -30,22 +30,27 @@ namespace OddsAndBodsTask.Helpers
                     Console.BackgroundColor = ConsoleColor.Red;
                     Console.WriteLine($"Error - {message}");
                     Console.ResetColor();
+                    Console.WriteLine();
                     break;
                 case LogType.Warning:
-                    Console.BackgroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"Warning - {message}");
+                    Console.BackgroundColor = ConsoleColor.DarkYellow;
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.WriteLine($"{message}");
                     Console.ResetColor();
+                    Console.WriteLine();
                     break;
                 case LogType.Info:
                     Console.ResetColor();
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine($"Info - {message}");
                     Console.ResetColor();
+                    Console.WriteLine();
                     break;
                 case LogType.Comment:
                     Console.ResetColor();
                     Console.WriteLine($"{message}");
                     Console.ResetColor();
+                    Console.WriteLine();
                     break;
                 default:
                     break;

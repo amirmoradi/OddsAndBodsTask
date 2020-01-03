@@ -21,6 +21,11 @@ namespace OddsAndBodsTask
             IConfigurationRoot configuration = builder.Build();
             var author = configuration.GetSection("MyConfig").Get<MyConfig>();
 
+            LogHelper.SubmitLog("Task: Build a C# command line application which retrieves a subset of data exposed by the Star Wars API ( https://swapi.co ) and inserts it into a SQL Server database and then exits. ", LogType.Comment);
+
+            LogHelper.SubmitLog("Please hit a key to proceed......", LogType.Warning);
+            Console.ReadKey();
+
             //Before start adding items to database we have to make sure the database is clean
             ClearDatabase();
 
