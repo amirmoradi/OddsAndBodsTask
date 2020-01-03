@@ -6,13 +6,9 @@ namespace OddsAndBodsTask.DAL
 {
     public class PlanetRepository
     {
-        public static bool PlanetExist(string url)
-        {
-            using (var context = new StarWarsContext())
-            {
-                return context.Planet.Any(x => x.Url == url);
-            }
-        }
+        /// <summary>
+        /// Getting Planet Item by URL
+        /// </summary>
         public static Planet GetPlanet(string url)
         {
             using (var context = new StarWarsContext())
@@ -21,6 +17,9 @@ namespace OddsAndBodsTask.DAL
             }
         }
 
+        /// <summary>
+        /// Adding new Planet Items
+        /// </summary>
         public static void Insert(List<Planet> entities)
         {
             using (var context = new StarWarsContext())

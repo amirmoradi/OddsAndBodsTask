@@ -6,13 +6,10 @@ namespace OddsAndBodsTask.DAL
 {
     public class SpeciesRepository
     {
-        public static bool SpeciesExist(string url)
-        {
-            using (var context = new StarWarsContext())
-            {
-                return context.Species.Any(x => x.Url == url);
-            }
-        }
+        /// <summary>
+        /// Getting Species by URL
+        /// </summary>
+        
         public static Species GetSpecies(string url)
         {
             using (var context = new StarWarsContext())
@@ -21,6 +18,9 @@ namespace OddsAndBodsTask.DAL
             }
         }
         
+        /// <summary>
+        /// Adding new Species items
+        /// </summary>
         public static void Insert(List<Species> entities)
         {
             using (var context = new StarWarsContext())

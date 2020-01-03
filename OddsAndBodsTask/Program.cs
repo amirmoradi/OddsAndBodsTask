@@ -21,15 +21,35 @@ namespace OddsAndBodsTask
             IConfigurationRoot configuration = builder.Build();
             var author = configuration.GetSection("MyConfig").Get<MyConfig>();
 
+            //Before start adding items to database we have to make sure the database is clean
+            ClearDatabase();
+
+            //Start the process -- Getting data from API, build models and add them to database
             ProcessItems(author.SWAPIUrl);
 
             Environment.Exit(0);
         }
 
+        /// <summary>
+        /// Clearing data from database
+        /// </summary>
+        private static void ClearDatabase()
+        {
+            LogHelper.SubmitLog("Cleaning database", LogType.Comment);
+            DataAccessRepository.ClearData();
+            LogHelper.SubmitLog("All data cleaned from database", LogType.Info);
+
+            LogHelper.SubmitLog("...........................................", LogType.Comment);
+        }
+
+        /// <summary>
+        /// Process Items
+        /// </summary>
         private static void ProcessItems(string baseUrl)
         {
             try
             {
+                //Getting data from API
                 LogHelper.SubmitLog("Getting Peoples", LogType.Comment);
                 var people = GetAllPeople(baseUrl);
                 LogHelper.SubmitLog($"{people.Count} peoples retrieved", LogType.Info);
@@ -46,7 +66,7 @@ namespace OddsAndBodsTask
                 var species = GetSpecies(baseUrl);
                 LogHelper.SubmitLog($"{species.Count} species retrieved", LogType.Info);
 
-                LogHelper.SubmitLog("Getting Starships", LogType.Comment);
+                LogHelper.SubmitLog("Getting StarShips", LogType.Comment);
                 var starShips = GetStarships(baseUrl);
                 LogHelper.SubmitLog($"{starShips.Count} starships retrieved", LogType.Info);
 
@@ -57,11 +77,11 @@ namespace OddsAndBodsTask
 
                 LogHelper.SubmitLog("...........................................", LogType.Comment);
                 
-                //Adding objects
+                //Adding objects to Database
                 LogHelper.SubmitLog("Processing Films...", LogType.Comment);
                 var filmsToAdd = ModelFactory.GenerateNewFilms(films);
                 FilmRepository.Insert(filmsToAdd);
-                LogHelper.SubmitLog($"Done!", LogType.Info);
+                LogHelper.SubmitLog("Done!", LogType.Info);
 
                 LogHelper.SubmitLog("Processing Planets...", LogType.Comment);
                 var planetsToAdd = ModelFactory.GenerateNewPlanets(planets);
@@ -71,22 +91,22 @@ namespace OddsAndBodsTask
                 LogHelper.SubmitLog("Processing Vehicles...", LogType.Comment);
                 var vehiclesToAdd = ModelFactory.GenerateNewVehicles(vehicles);
                 VehicleRepository.Insert(vehiclesToAdd);
-                LogHelper.SubmitLog($"Done!", LogType.Info);
+                LogHelper.SubmitLog("Done!", LogType.Info);
 
                 LogHelper.SubmitLog("Processing Starships...", LogType.Comment);
                 var starshipsToAdd = ModelFactory.GenerateNewStarShips(starShips);
                 StarshipRepository.Insert(starshipsToAdd);
-                LogHelper.SubmitLog($"Done!", LogType.Info);
+                LogHelper.SubmitLog("Done!", LogType.Info);
 
                 LogHelper.SubmitLog("Processing Species...", LogType.Comment);
                 var speciesToAdd = ModelFactory.GenerateNewSpecies(species);
                 SpeciesRepository.Insert(speciesToAdd);
-                LogHelper.SubmitLog($"Done!", LogType.Info);
+                LogHelper.SubmitLog("Done!", LogType.Info);
 
                 LogHelper.SubmitLog("Processing People...", LogType.Comment);
                 var peopleToAdd = ModelFactory.GenerateNewPeople(people);
                 PeopleRepository.Insert(peopleToAdd);
-                LogHelper.SubmitLog($"Done!", LogType.Info);
+                LogHelper.SubmitLog("Done!", LogType.Info);
             }
             catch (Exception exp)
             {
@@ -94,126 +114,164 @@ namespace OddsAndBodsTask
             }
         }
 
+        /// <summary>
+        /// Get Vehicles from SWAPI
+        /// </summary>
         private static List<VehicleResponseItemModel> GetVehicles(string baseUrl)
         {
             var vehicleItems = new List<VehicleResponseItemModel>();
             var vehicles = HttpRequestsHelper.ExecuteGetRequest<VehiclesResponse>(baseUrl.Replace("{{::Placeholder::}}", "vehicles")) as VehiclesResponse;
-            vehicleItems.AddRange(vehicles.results);
-
-            if (vehicles.count > 10)
+            if (vehicles != null)
             {
-                var url = vehicles.next;
-                var pages = vehicles.count / 10 + 1;
+                vehicleItems.AddRange(vehicles.results);
 
-                for (int i = 1; i < pages; i++)
+                //If more than 10 items exists, API provides data in different pages. This loop is to get all available pages for the object
+                if (vehicles.count > 10)
                 {
-                    vehicles = HttpRequestsHelper.ExecuteGetRequest<VehiclesResponse>(url) as VehiclesResponse;
-                    url = vehicles.next;
-                    vehicleItems.AddRange(vehicles.results);
-                    if (string.IsNullOrEmpty(vehicles.next))
-                        break;
+                    var url = vehicles.next;
+                    var pages = vehicles.count / 10 + 1;
+
+                    for (int i = 1; i < pages; i++)
+                    {
+                        vehicles = HttpRequestsHelper.ExecuteGetRequest<VehiclesResponse>(url) as VehiclesResponse;
+                        url = vehicles.next;
+                        vehicleItems.AddRange(vehicles.results);
+                        if (string.IsNullOrEmpty(vehicles.next))
+                            break;
+                    }
                 }
             }
 
             return vehicleItems;
         }
 
+        /// <summary>
+        /// Get StarShips from SWAPI
+        /// </summary>
         private static List<StarshipResponseItemModel> GetStarships(string baseUrl)
         {
             var starshipItems = new List<StarshipResponseItemModel>();
             var starShips = HttpRequestsHelper.ExecuteGetRequest<StarShipResponse>(baseUrl.Replace("{{::Placeholder::}}", "starships")) as StarShipResponse;
-            starshipItems.AddRange(starShips.results);
-
-            if (starShips.count > 10)
+            if (starShips != null)
             {
-                var url = starShips.next;
-                var pages = starShips.count / 10 + 1;
+                starshipItems.AddRange(starShips.results);
 
-                for (int i = 1; i < pages; i++)
+                //If more than 10 items exists, API provides data in different pages. This loop is to get all available pages for the object
+                if (starShips.count > 10)
                 {
-                    starShips = HttpRequestsHelper.ExecuteGetRequest<StarShipResponse>(url) as StarShipResponse;
-                    url = starShips.next;
-                    starshipItems.AddRange(starShips.results);
-                    if (string.IsNullOrEmpty(starShips.next))
-                        break;
+                    var url = starShips.next;
+                    var pages = starShips.count / 10 + 1;
+
+                    for (int i = 1; i < pages; i++)
+                    {
+                        starShips = HttpRequestsHelper.ExecuteGetRequest<StarShipResponse>(url) as StarShipResponse;
+                        url = starShips.next;
+                        starshipItems.AddRange(starShips.results);
+                        if (string.IsNullOrEmpty(starShips.next))
+                            break;
+                    }
                 }
             }
 
             return starshipItems;
         }
 
+        /// <summary>
+        /// Get Species from SWAPI
+        /// </summary>
         private static List<SpeciesResponseItemModel> GetSpecies(string baseUrl)
         {
             var speciesItems = new List<SpeciesResponseItemModel>();
             var species = HttpRequestsHelper.ExecuteGetRequest<SpeciesResponse>(baseUrl.Replace("{{::Placeholder::}}", "species")) as SpeciesResponse;
-            speciesItems.AddRange(species.results);
-
-            if (species.count > 10)
+            if (species != null)
             {
-                var url = species.next;
-                var pages = species.count / 10 + 1;
+                speciesItems.AddRange(species.results);
 
-                for (int i = 1; i < pages; i++)
+                //If more than 10 items exists, API provides data in different pages. This loop is to get all available pages for the object
+                if (species.count > 10)
                 {
-                    species = HttpRequestsHelper.ExecuteGetRequest<SpeciesResponse>(url) as SpeciesResponse;
-                    url = species.next;
-                    speciesItems.AddRange(species.results);
-                    if (string.IsNullOrEmpty(species.next))
-                        break;
+                    var url = species.next;
+                    var pages = species.count / 10 + 1;
+
+                    for (int i = 1; i < pages; i++)
+                    {
+                        species = HttpRequestsHelper.ExecuteGetRequest<SpeciesResponse>(url) as SpeciesResponse;
+                        url = species.next;
+                        speciesItems.AddRange(species.results);
+                        if (string.IsNullOrEmpty(species.next))
+                            break;
+                    }
                 }
             }
 
             return speciesItems;
         }
 
+        /// <summary>
+        /// Get Planets from SWAPI
+        /// </summary>
         private static List<PlanetResponseItemModel> GetPlanets(string baseUrl)
         {
             var planetItems = new List<PlanetResponseItemModel>();
             var planets = HttpRequestsHelper.ExecuteGetRequest<PlanetsResponse>(baseUrl.Replace("{{::Placeholder::}}", "planets")) as PlanetsResponse;
-            planetItems.AddRange(planets.results);
-
-            if (planets.count > 10)
+            if (planets != null)
             {
-                var url = planets.next;
-                var pages = planets.count / 10 + 1;
+                planetItems.AddRange(planets.results);
 
-                for (int i = 1; i < pages; i++)
+                //If more than 10 items exists, API provides data in different pages. This loop is to get all available pages for the object
+                if (planets.count > 10)
                 {
-                    planets = HttpRequestsHelper.ExecuteGetRequest<PlanetsResponse>(url) as PlanetsResponse;
-                    url = planets.next;
-                    planetItems.AddRange(planets.results);
-                    if (string.IsNullOrEmpty(planets.next))
-                        break;
+                    var url = planets.next;
+                    var pages = planets.count / 10 + 1;
+
+                    for (int i = 1; i < pages; i++)
+                    {
+                        planets = HttpRequestsHelper.ExecuteGetRequest<PlanetsResponse>(url) as PlanetsResponse;
+                        url = planets.next;
+                        planetItems.AddRange(planets.results);
+                        if (string.IsNullOrEmpty(planets.next))
+                            break;
+                    }
                 }
             }
 
             return planetItems;
         }
 
+        /// <summary>
+        /// Get Films from SWAPI
+        /// </summary>
         private static List<FilmResponseItemModel> GetFilms(string baseUrl)
         {
             var firmItems = new List<FilmResponseItemModel>();
             var films = HttpRequestsHelper.ExecuteGetRequest<FilmsResponse>(baseUrl.Replace("{{::Placeholder::}}", "films")) as FilmsResponse;
-            firmItems.AddRange(films.results);
-
-            if (films.count > 10)
+            if (films != null)
             {
-                var url = films.next;
-                var pages = films.count / 10 + 1;
+                firmItems.AddRange(films.results);
 
-                for (int i = 1; i < pages; i++)
+                //If more than 10 items exists, API provides data in different pages. This loop is to get all available pages for the object
+                if (films.count > 10)
                 {
-                    films = HttpRequestsHelper.ExecuteGetRequest<FilmsResponse>(url) as FilmsResponse;
-                    url = films.next;
-                    firmItems.AddRange(films.results);
-                    if (string.IsNullOrEmpty(films.next))
-                        break;
+                    var url = films.next;
+                    var pages = films.count / 10 + 1;
+
+                    for (int i = 1; i < pages; i++)
+                    {
+                        films = HttpRequestsHelper.ExecuteGetRequest<FilmsResponse>(url) as FilmsResponse;
+                        url = films.next;
+                        firmItems.AddRange(films.results);
+                        if (string.IsNullOrEmpty(films.next))
+                            break;
+                    }
                 }
             }
 
             return firmItems;
         }
 
+        /// <summary>
+        /// Get People from SWAPI
+        /// </summary>
         private static List<PeopleResponseItemModel> GetAllPeople(string baseUrl)
         {
             var peopleItems = new List<PeopleResponseItemModel>();
@@ -221,20 +279,24 @@ namespace OddsAndBodsTask
             var people =
                 HttpRequestsHelper.ExecuteGetRequest<PeopleResponse>(baseUrl.Replace("{{::Placeholder::}}", "people")) as PeopleResponse;
 
-            peopleItems.AddRange(people.results);
-
-            if (people.count > 10)
+            if (people != null)
             {
-                var url = people.next;
-                var pages = people.count / 10 + 1;
+                peopleItems.AddRange(people.results);
 
-                for (int i = 1; i < pages; i++)
+                //If more than 10 items exists, API provides data in different pages. This loop is to get all available pages for the object
+                if (people.count > 10)
                 {
-                    people = HttpRequestsHelper.ExecuteGetRequest<PeopleResponse>(url) as PeopleResponse;
-                    url = people.next;
-                    peopleItems.AddRange(people.results);
-                    if (string.IsNullOrEmpty(people.next))
-                        break;
+                    var url = people.next;
+                    var pages = people.count / 10 + 1;
+
+                    for (int i = 1; i < pages; i++)
+                    {
+                        people = HttpRequestsHelper.ExecuteGetRequest<PeopleResponse>(url) as PeopleResponse;
+                        url = people.next;
+                        peopleItems.AddRange(people.results);
+                        if (string.IsNullOrEmpty(people.next))
+                            break;
+                    }
                 }
             }
 

@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace OddsAndBodsTask.Helpers
 {
-
+    /// <summary>
+    /// Log Type: Info, Error, Warning, and Content
+    /// </summary>
     public enum LogType
     {
         Info,
@@ -12,8 +12,16 @@ namespace OddsAndBodsTask.Helpers
         Warning,
         Comment
     }
+    /// <summary>
+    /// LogHelper
+    /// </summary>
     public class LogHelper
     {
+        /// <summary>
+        /// Submits logs for user - can be extended to add logs to database or files or ....
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="logType"></param>
         public static void SubmitLog(string message, LogType logType)
         {
             switch (logType)

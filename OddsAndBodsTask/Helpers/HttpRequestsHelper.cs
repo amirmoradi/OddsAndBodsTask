@@ -7,6 +7,10 @@ namespace OddsAndBodsTask.Helpers
 {
     public class HttpRequestsHelper
     {
+        /// <summary>
+        /// Handles Get Requests
+        /// </summary>
+        /// <returns></returns>
         public static dynamic ExecuteGetRequest<T>(string url)
         {
             using (var client = new WebClient())
