@@ -19,7 +19,7 @@ namespace OddsAndBodsTask
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
             IConfigurationRoot configuration = builder.Build();
-            var author = configuration.GetSection("MyConfig").Get<MyConfig>();
+            var config = configuration.GetSection("MyConfig").Get<MyConfig>();
 
             LogHelper.SubmitLog("Task: Build a C# command line application which retrieves a subset of data exposed by the Star Wars API ( https://swapi.co ) and inserts it into a SQL Server database and then exits. ", LogType.Comment);
 
@@ -30,7 +30,7 @@ namespace OddsAndBodsTask
             ClearDatabase();
 
             //Start the process -- Getting data from API, build models and add them to database
-            ProcessItems(author.SWAPIUrl);
+            ProcessItems(config.SWAPIUrl);
 
             Environment.Exit(0);
         }
